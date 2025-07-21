@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BibleVerse4U</title>
+  <style>
+    :root {
+      --light-bg: #f2f6f9;
+      --light-text: #222;
+      --dark-bg: #121212;
+      --dark-text: #f2f2f2;
+      --accent: #6c63ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--light-bg);
+      color: var(--light-text);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .dark {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+    }
+
+    header {
+      padding: 1rem;
+      text-align: center;
+      background: var(--accent);
+      color: white;
+    }
+
+    main {
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .dark main {
+      background: rgba(25, 25, 25, 0.85);
+    }
+
+    select, button {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+
+    .verse {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 1rem 0;
+    }
+
+    .reference {
+      font-style: italic;
+    }
+
+    .study {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: rgba(0,0,0,0.05);
+      border-left: 4px solid var(--accent);
+    }
+
+    .dark .study {
+      background: rgba(255,255,255,0.1);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.6;
+    }
+
+    .saved-list {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BibleVerse4U</h1>
+    <label>
+      <input type="checkbox" id="themeToggle" />
+      Light / Dark
+    </label>
+  </header>
+
+  <main>
+    <select id="version">
+      <option value="kjv">KJV</option>
+      <option value="nlt">NLT</option>
+      <option value="niv">NIV</option>
+    </select>
+    <button onclick="getVerse()">Refresh Verse</button>
+    <div class="verse" id="verse">Loading...</div>
+    <div class="reference" id="reference"></div>
+    <button onclick="saveVerse()">Save Verse</button>
+    <div class="study" id="studyTips"></div>
+
+    <h3>Saved Verses:</h3>
+    <div class="saved-list" id="savedList"></div>
+  </main>
+
+  <footer>Built with 💜 for your morning devotionals.</footer>
+
+  <script>
+    const verseEl = document.getElementById('verse');
+    const refEl = document.getElementById('reference');
+    const studyTipsEl = document.getElementById('studyTips');
+    const savedListEl = document.getElementById('savedList');
+    const versionSelect = document.getElementById('version');
+
+    const verses = {
+      nlt: ["Philippians 4:13 - For I can do everything through Christ, who gives me strength."],
+      niv: ["Romans 12:2 - Do not conform to the pattern of this world, but be transformed..."],
+    };
+
+    function applyTheme() {
+      document.body.classList.toggle('dark', document.getElementById('themeToggle').checked);
+    }
+
+    document.getElementById('themeToggle').addEventListener('change', applyTheme);
+
+    function getVerse() {
+      const version = versionSelect.value;
+      fetch('https://labs.bible.org/api/?passage=random&type=json')
+        .then(res => res.json())
+        .then(data => {
+          const verseText = `${data[0].text}`;
+          const ref = `${data[0].bookname} ${data[0].chapter}:${data[0].verse}`;
+          verseEl.textContent = verseText;
+          refEl.textContent = ref;
+          studyTipsEl.textContent = generateStudy(ref, verseText);
+        })
+        .catch(() => {
+          const fallback = verses[version][0] || "John 3:16 - For God so loved the world...";
+          verseEl.textContent = fallback.split(" - ")[1];
+          refEl.textContent = fallback.split(" - ")[0];
+          studyTipsEl.textContent = generateStudy(refEl.textContent, verseEl.textContent);
+        });
+    }
+
+    function generateStudy(ref, text) {
+      return `📖 Reflect on ${ref}: What does this verse reveal about God's character? How does it apply to your life today? Try journaling 2 thoughts.`;
+    }
+
+    function saveVerse() {
+      const saved = JSON.parse(localStorage.getItem('savedVerses') || '[]');
+      saved.push(`${refEl.textContent} - ${verseEl.textContent}`);
+      localStorage.setItem('savedVerses', JSON.stringify(saved));
+      showSaved();
+    }
+
+    function showSaved() {
+      const saved = JSON.parse(localStorage.getItem('savedVerses') || '[]');
+      savedListEl.innerHTML = saved.map(v => `<div>${v}</div>`).join('');
+    }
+
+    getVerse();
+    showSaved();
+  </script>
+</body>
+</html>
