@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BibleVerse4U</title>
+  <title>Verse4U</title>
   <style>
     :root {
-      --light-bg: #f2f6f9;
+      --light-bg: #fefeff;
       --light-text: #222;
       --dark-bg: #121212;
       --dark-text: #f2f2f2;
-      --accent: #6c63ff;
+      --accent: #8a77ff;
+      --card-light: #ffffff;
+      --card-dark: #1f1f1f;
     }
 
     body {
@@ -32,13 +34,21 @@
       margin-bottom: 1.5rem;
     }
 
+    header h1 {
+      font-size: 2.5rem;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
     select, button {
       font-size: 1rem;
       padding: 0.5rem 1rem;
       margin: 0.5rem;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
       cursor: pointer;
+      transition: background 0.2s;
     }
 
     button {
@@ -49,71 +59,58 @@
     .verse-container {
       max-width: 700px;
       margin: 0 auto;
-      background: rgba(255,255,255,0.9);
-      border-radius: 12px;
+      background: var(--card-light);
+      border-radius: 15px;
       padding: 1rem 2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
       transition: background 0.3s;
     }
 
     body.dark .verse-container {
-      background: rgba(25,25,25,0.85);
+      background: var(--card-dark);
     }
 
     .verse-text {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 600;
       margin: 1rem 0 0.5rem;
     }
 
     .reference {
       font-style: italic;
-      opacity: 0.7;
+      opacity: 0.8;
     }
 
     .study-tips {
       margin-top: 1.5rem;
-      background: #e6e6ff;
+      background: #ecebff;
       padding: 1rem;
       border-left: 5px solid var(--accent);
-      border-radius: 6px;
+      border-radius: 10px;
       font-size: 1rem;
-      line-height: 1.4;
-      transition: background 0.3s;
+      line-height: 1.5;
     }
 
     body.dark .study-tips {
-      background: #29293d;
+      background: #2b2a3d;
     }
 
     .saved-verses {
       max-width: 700px;
-      margin: 2rem auto 0;
-      padding: 0 1rem;
-    }
-
-    .saved-verses h3 {
-      text-align: center;
-    }
-
-    .saved-list {
-      list-style: none;
-      padding: 0;
-      max-width: 700px;
-      margin: 0 auto;
+      margin: 2rem auto;
+      padding: 1rem;
     }
 
     .saved-list li {
       background: #ddd;
       margin: 0.5rem 0;
       padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: default;
-      transition: background 0.3s;
+      border-radius: 8px;
     }
 
     body.dark .saved-list li {
       background: #333;
+      color: var(--dark-text);
     }
 
     .theme-toggle {
@@ -123,12 +120,11 @@
       align-items: center;
       gap: 0.5rem;
     }
-
   </style>
 </head>
 <body>
   <header>
-    <h1>BibleVerse4U</h1>
+    <h1>Verse4U</h1>
     <div class="theme-toggle">
       <label for="themeSwitch">Dark Mode</label>
       <input type="checkbox" id="themeSwitch" />
@@ -137,7 +133,7 @@
 
   <main>
     <div class="verse-container">
-      <select id="versionSelect" aria-label="Select Bible Version">
+      <select id="versionSelect">
         <option value="kjv">KJV</option>
         <option value="niv">NIV</option>
         <option value="nlt">NLT</option>
@@ -165,25 +161,19 @@
     const saveVerseBtn = document.getElementById('saveVerseBtn');
     const themeSwitch = document.getElementById('themeSwitch');
 
-    // Toggle Dark Mode
     themeSwitch.addEventListener('change', () => {
       document.body.classList.toggle('dark', themeSwitch.checked);
-      saveThemePreference(themeSwitch.checked);
+      localStorage.setItem('bibleverse4u-theme', themeSwitch.checked ? 'dark' : 'light');
     });
 
-    function saveThemePreference(isDark) {
-      localStorage.setItem('bibleverse4u-theme', isDark ? 'dark' : 'light');
-    }
-
-    function loadThemePreference() {
-      const theme = localStorage.getItem('bibleverse4u-theme');
-      if (theme === 'dark') {
+    function applySavedTheme() {
+      const saved = localStorage.getItem('bibleverse4u-theme');
+      if (saved === 'dark') {
         themeSwitch.checked = true;
         document.body.classList.add('dark');
       }
     }
 
-    // Bible API call for random verse (fallback to local if error)
     async function fetchVerse(version) {
       try {
         const res = await fetch(`https://labs.bible.org/api/?passage=random&type=json&version=${version}`);
@@ -193,7 +183,6 @@
           ref: `${data[0].bookname} ${data[0].chapter}:${data[0].verse}`
         };
       } catch {
-        // Fallback verses
         const fallback = {
           kjv: {
             text: "For I can do all things through Christ which strengtheneth me.",
@@ -212,32 +201,33 @@
       }
     }
 
-    function generateStudyTips(ref, text) {
-      return `📖 Study ${ref}:\n\n- Reflect on the meaning of this verse.\n- How can you apply this to your daily life?\n- Consider journaling your thoughts and prayers about it.\n- Memorize this verse and meditate on it throughout your day.`;
+    function generateStudyTips(ref) {
+      return `📌 Quick ways to reflect on ${ref}:
+- Read slowly and out loud.
+- Ask: what stands out to me?
+- How can this verse guide me today?
+- Write down a prayer or action step.`;
     }
 
     async function showVerse() {
       verseTextEl.textContent = 'Loading verse...';
       verseRefEl.textContent = '';
       studyTipsEl.textContent = '';
-
       const version = versionSelect.value;
       const verse = await fetchVerse(version);
-
       verseTextEl.textContent = verse.text;
       verseRefEl.textContent = verse.ref;
-      studyTipsEl.textContent = generateStudyTips(verse.ref, verse.text);
+      studyTipsEl.textContent = generateStudyTips(verse.ref);
     }
 
-    // Saved verses management
     function loadSavedVerses() {
       const saved = JSON.parse(localStorage.getItem('bibleverse4u-saved') || '[]');
-      savedListEl.innerHTML = saved.map((v, i) => `<li>${v}</li>`).join('');
+      savedListEl.innerHTML = saved.map(v => `<li>${v}</li>`).join('');
     }
 
     function saveCurrentVerse() {
-      const saved = JSON.parse(localStorage.getItem('bibleverse4u-saved') || '[]');
       const currentVerse = `${verseRefEl.textContent} - ${verseTextEl.textContent}`;
+      const saved = JSON.parse(localStorage.getItem('bibleverse4u-saved') || '[]');
       if (!saved.includes(currentVerse)) {
         saved.push(currentVerse);
         localStorage.setItem('bibleverse4u-saved', JSON.stringify(saved));
@@ -248,8 +238,7 @@
     refreshBtn.addEventListener('click', showVerse);
     saveVerseBtn.addEventListener('click', saveCurrentVerse);
 
-    // On load
-    loadThemePreference();
+    applySavedTheme();
     showVerse();
     loadSavedVerses();
   </script>
